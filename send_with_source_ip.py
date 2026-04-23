@@ -5,9 +5,10 @@ import json
 import sys
 import time
 import urllib.parse
+from typing import Dict, Tuple
 
 
-def parse_header(value: str) -> tuple[str, str]:
+def parse_header(value: str) -> Tuple[str, str]:
     if ":" not in value:
         raise argparse.ArgumentTypeError(f"invalid header format: {value!r}")
     name, raw = value.split(":", 1)
@@ -92,7 +93,7 @@ def format_os_error(exc: OSError) -> str:
 def send_once(
     parsed: urllib.parse.SplitResult,
     method: str,
-    headers: dict[str, str],
+    headers: Dict[str, str],
     body: str,
     timeout: float,
     source_ip: str,

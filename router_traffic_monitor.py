@@ -162,7 +162,7 @@ def fetch_payload(
     transport: str,
     url: str,
     method: str,
-    headers: dict[str, str],
+    headers: Dict[str, str],
     body_text: str,
     body: Optional[bytes],
     timeout: float,

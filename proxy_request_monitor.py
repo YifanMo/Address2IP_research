@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Lock, Thread
-from typing import Optional
+from typing import Dict, List, Optional, Set, Tuple
 from urllib.parse import parse_qs, urlsplit
 
 
@@ -33,7 +33,7 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
 
 
-def split_host_port(value: str, default_port: int) -> tuple[str, int]:
+def split_host_port(value: str, default_port: int) -> Tuple[str, int]:
     raw = value.strip()
     if not raw:
         raise ValueError("host is empty")
@@ -63,7 +63,7 @@ class HitStore:
         self.max_records = max_records
         self._lock = Lock()
         self._next_id = 1
-        self._records: list[dict] = []
+        self._records: List[dict] = []
 
     def add(self, record: dict) -> dict:
         with self._lock:
@@ -86,7 +86,7 @@ class HitStore:
         mode: str = "",
         text: str = "",
         limit: int = 200,
-    ) -> list[dict]:
+    ) -> List[dict]:
         with self._lock:
             records = list(self._records)
 
@@ -126,9 +126,9 @@ class HitStore:
         with self._lock:
             records = list(self._records)
 
-        modes: dict[str, int] = {}
-        hosts: dict[str, int] = {}
-        unique_ips: set[str] = set()
+        modes: Dict[str, int] = {}
+        hosts: Dict[str, int] = {}
+        unique_ips: Set[str] = set()
         latest = None
 
         for item in records:
@@ -155,9 +155,9 @@ class HitStore:
 
 @dataclass
 class MatchRules:
-    hosts: list[str]
-    path_keywords: list[str]
-    url_keywords: list[str]
+    hosts: List[str]
+    path_keywords: List[str]
+    url_keywords: List[str]
 
     def host_matches(self, host: str) -> bool:
         host = host.lower()
@@ -168,7 +168,7 @@ class MatchRules:
         return False
 
     def should_log_http(self, host: str, path: str, full_url: str) -> bool:
-        checks: list[bool] = []
+        checks: List[bool] = []
         if self.hosts:
             checks.append(self.host_matches(host))
         if self.path_keywords:
@@ -186,7 +186,7 @@ class ProxyMonitorServer(ThreadingHTTPServer):
 
     def __init__(
         self,
-        server_address: tuple[str, int],
+        server_address: Tuple[str, int],
         match_rules: MatchRules,
         timeout: float,
         insecure_upstream: bool,
@@ -218,7 +218,7 @@ class ProxyDashboardServer(ThreadingHTTPServer):
 
     def __init__(
         self,
-        server_address: tuple[str, int],
+        server_address: Tuple[str, int],
         static_dir: Path,
         store: HitStore,
         proxy_host: str,
@@ -344,7 +344,7 @@ class ProxyMonitorHandler(BaseHTTPRequestHandler):
     server_version = "ProxyRequestMonitor/1.0"
     protocol_version = "HTTP/1.1"
 
-    def _build_http_target(self) -> tuple[str, str, int, str, str]:
+    def _build_http_target(self) -> Tuple[str, str, int, str, str]:
         parsed = urlsplit(self.path)
         if parsed.scheme in {"http", "https"} and parsed.hostname:
             scheme = parsed.scheme.lower()
@@ -365,8 +365,8 @@ class ProxyMonitorHandler(BaseHTTPRequestHandler):
         full_url = f"http://{host_header}{path}"
         return "http", host, port, path, full_url
 
-    def _upstream_headers(self) -> dict[str, str]:
-        headers: dict[str, str] = {}
+    def _upstream_headers(self) -> Dict[str, str]:
+        headers: Dict[str, str] = {}
         for name, value in self.headers.items():
             if name.lower() in HOP_BY_HOP_HEADERS:
                 continue
@@ -434,7 +434,7 @@ class ProxyMonitorHandler(BaseHTTPRequestHandler):
                 }
             )
 
-    def _tunnel(self, upstream: socket.socket) -> tuple[int, int]:
+    def _tunnel(self, upstream: socket.socket) -> Tuple[int, int]:
         sockets = [self.connection, upstream]
         client_to_server_bytes = 0
         server_to_client_bytes = 0

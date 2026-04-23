@@ -6,6 +6,7 @@ import shutil
 import socket
 import subprocess
 import sys
+from typing import List, Set
 
 
 FAMILY_MAP = {
@@ -48,9 +49,9 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def dedupe(values: list[str]) -> list[str]:
-    result: list[str] = []
-    seen: set[str] = set()
+def dedupe(values: List[str]) -> List[str]:
+    result: List[str] = []
+    seen: Set[str] = set()
     for value in values:
         if value in seen:
             continue
@@ -83,7 +84,7 @@ def detect_preferred_ip(family: int) -> str:
     return ""
 
 
-def run_command(args: list[str]) -> str:
+def run_command(args: List[str]) -> str:
     command = shutil.which(args[0])
     if command is None:
         return ""
@@ -103,15 +104,15 @@ def run_command(args: list[str]) -> str:
     return completed.stdout
 
 
-def collect_ifconfig_ips(family: int) -> list[str]:
+def collect_ifconfig_ips(family: int) -> List[str]:
     output = run_command(["ifconfig"])
     if not output:
         return []
 
-    active: list[str] = []
-    others: list[str] = []
-    blocks: list[list[str]] = []
-    current: list[str] = []
+    active: List[str] = []
+    others: List[str] = []
+    blocks: List[List[str]] = []
+    current: List[str] = []
 
     for line in output.splitlines():
         if line and not line[0].isspace():
@@ -128,7 +129,7 @@ def collect_ifconfig_ips(family: int) -> list[str]:
     for lines in blocks:
         interface = lines[0].split(":", 1)[0]
         text = "\n".join(lines)
-        addresses: list[str] = []
+        addresses: List[str] = []
 
         for raw_line in lines[1:]:
             stripped = raw_line.strip()
@@ -152,8 +153,8 @@ def collect_ifconfig_ips(family: int) -> list[str]:
     return dedupe(active + others)
 
 
-def collect_candidate_ips(family: int) -> list[str]:
-    candidates: list[str] = []
+def collect_candidate_ips(family: int) -> List[str]:
+    candidates: List[str] = []
     for host in (socket.gethostname(), socket.getfqdn(), "localhost"):
         try:
             infos = socket.getaddrinfo(host, None, family=family, type=socket.SOCK_DGRAM)
@@ -166,8 +167,8 @@ def collect_candidate_ips(family: int) -> list[str]:
     return dedupe(candidates)
 
 
-def collect_ips(families: list[int], include_loopback: bool) -> list[str]:
-    addresses: list[str] = []
+def collect_ips(families: List[int], include_loopback: bool) -> List[str]:
+    addresses: List[str] = []
     for family in families:
         preferred = detect_preferred_ip(family)
         if preferred:

@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Lock, Thread
-from typing import Optional
+from typing import Dict, List, Optional, Set, Tuple
 from urllib.parse import parse_qs, urlsplit
 
 
@@ -34,7 +34,7 @@ def qtype_name(value: int) -> str:
     return QTYPE_NAMES.get(value, str(value))
 
 
-def domain_matches(domain: str, patterns: list[str]) -> bool:
+def domain_matches(domain: str, patterns: List[str]) -> bool:
     if not patterns:
         return True
     domain = domain.rstrip(".").lower()
@@ -45,11 +45,11 @@ def domain_matches(domain: str, patterns: list[str]) -> bool:
     return False
 
 
-def parse_qname(packet: bytes, offset: int) -> tuple[str, int]:
-    labels: list[str] = []
+def parse_qname(packet: bytes, offset: int) -> Tuple[str, int]:
+    labels: List[str] = []
     jumped = False
     original_next = offset
-    seen_offsets: set[int] = set()
+    seen_offsets: Set[int] = set()
 
     while True:
         if offset >= len(packet):
@@ -87,12 +87,12 @@ def parse_qname(packet: bytes, offset: int) -> tuple[str, int]:
     return ".".join(labels), original_next
 
 
-def parse_questions(packet: bytes) -> list[dict]:
+def parse_questions(packet: bytes) -> List[dict]:
     if len(packet) < 12:
         raise ValueError("DNS packet is too short")
     qdcount = int.from_bytes(packet[4:6], "big")
     offset = 12
-    questions: list[dict] = []
+    questions: List[dict] = []
 
     for _ in range(qdcount):
         domain, offset = parse_qname(packet, offset)
@@ -142,7 +142,7 @@ class DnsHitStore:
         self.max_records = max_records
         self._lock = Lock()
         self._next_id = 1
-        self._records: list[dict] = []
+        self._records: List[dict] = []
 
     def add(self, record: dict) -> dict:
         with self._lock:
@@ -165,7 +165,7 @@ class DnsHitStore:
         qtype: str = "",
         text: str = "",
         limit: int = 200,
-    ) -> list[dict]:
+    ) -> List[dict]:
         with self._lock:
             records = list(self._records)
 
@@ -194,9 +194,9 @@ class DnsHitStore:
         with self._lock:
             records = list(self._records)
 
-        unique_ips: set[str] = set()
-        domains: dict[str, int] = {}
-        qtypes: dict[str, int] = {}
+        unique_ips: Set[str] = set()
+        domains: Dict[str, int] = {}
+        qtypes: Dict[str, int] = {}
         latest = None
 
         for item in records:
@@ -222,14 +222,14 @@ class DnsHitStore:
 
 class DnsMonitorMixin:
     store: DnsHitStore
-    upstreams: list[tuple[str, int]]
-    match_domains: list[str]
+    upstreams: List[Tuple[str, int]]
+    match_domains: List[str]
     timeout: float
     log_path: Optional[Path]
     log_lock: Lock
 
-    def forward_udp(self, packet: bytes) -> tuple[bytes, str, float]:
-        errors: list[str] = []
+    def forward_udp(self, packet: bytes) -> Tuple[bytes, str, float]:
+        errors: List[str] = []
         for upstream_host, upstream_port in self.upstreams:
             started_at = time.time()
             try:
@@ -242,8 +242,8 @@ class DnsMonitorMixin:
                 errors.append(f"{upstream_host}:{upstream_port} {exc}")
         raise OSError("; ".join(errors) or "all upstream DNS servers failed")
 
-    def forward_tcp(self, packet: bytes) -> tuple[bytes, str, float]:
-        errors: list[str] = []
+    def forward_tcp(self, packet: bytes) -> Tuple[bytes, str, float]:
+        errors: List[str] = []
         payload = len(packet).to_bytes(2, "big") + packet
         for upstream_host, upstream_port in self.upstreams:
             started_at = time.time()
@@ -311,7 +311,7 @@ class DnsMonitorMixin:
 
 
 def recv_exact(sock: socket.socket, size: int) -> bytes:
-    chunks: list[bytes] = []
+    chunks: List[bytes] = []
     remaining = size
     while remaining > 0:
         chunk = sock.recv(remaining)
@@ -327,10 +327,10 @@ class ThreadingUDPServerWithConfig(DnsMonitorMixin, socketserver.ThreadingUDPSer
 
     def __init__(
         self,
-        server_address: tuple[str, int],
+        server_address: Tuple[str, int],
         store: DnsHitStore,
-        upstreams: list[tuple[str, int]],
-        match_domains: list[str],
+        upstreams: List[Tuple[str, int]],
+        match_domains: List[str],
         timeout: float,
         log_path: Optional[Path],
         log_lock: Lock,
@@ -349,10 +349,10 @@ class ThreadingTCPServerWithConfig(DnsMonitorMixin, socketserver.ThreadingTCPSer
 
     def __init__(
         self,
-        server_address: tuple[str, int],
+        server_address: Tuple[str, int],
         store: DnsHitStore,
-        upstreams: list[tuple[str, int]],
-        match_domains: list[str],
+        upstreams: List[Tuple[str, int]],
+        match_domains: List[str],
         timeout: float,
         log_path: Optional[Path],
         log_lock: Lock,
@@ -430,12 +430,12 @@ class DnsDashboardServer(ThreadingHTTPServer):
 
     def __init__(
         self,
-        server_address: tuple[str, int],
+        server_address: Tuple[str, int],
         static_dir: Path,
         store: DnsHitStore,
         dns_host: str,
         dns_port: int,
-        match_domains: list[str],
+        match_domains: List[str],
     ):
         super().__init__(server_address, DnsDashboardHandler)
         self.static_dir = static_dir
@@ -542,7 +542,7 @@ class DnsDashboardHandler(BaseHTTPRequestHandler):
         return
 
 
-def parse_upstream(value: str) -> tuple[str, int]:
+def parse_upstream(value: str) -> Tuple[str, int]:
     if ":" in value and value.rsplit(":", 1)[1].isdigit():
         host, port = value.rsplit(":", 1)
         return host, int(port)

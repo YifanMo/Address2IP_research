@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Lock
+from typing import Dict, List, Set, Tuple
 from urllib.parse import parse_qs, urlsplit
 
 
@@ -14,7 +15,7 @@ class RequestStore:
         self.max_records = max_records
         self._lock = Lock()
         self._next_id = 1
-        self._records: list[dict] = []
+        self._records: List[dict] = []
 
     def add(self, record: dict) -> dict:
         with self._lock:
@@ -30,7 +31,7 @@ class RequestStore:
         with self._lock:
             self._records = []
 
-    def list(self, ip: str = "", method: str = "", text: str = "", limit: int = 200) -> list[dict]:
+    def list(self, ip: str = "", method: str = "", text: str = "", limit: int = 200) -> List[dict]:
         with self._lock:
             records = list(self._records)
 
@@ -65,8 +66,8 @@ class RequestStore:
         with self._lock:
             records = list(self._records)
 
-        methods: dict[str, int] = {}
-        unique_ips: set[str] = set()
+        methods: Dict[str, int] = {}
+        unique_ips: Set[str] = set()
         latest = None
         for item in records:
             methods[item["method"]] = methods.get(item["method"], 0) + 1
@@ -85,7 +86,7 @@ class RequestStore:
 class RequestRecorderServer(ThreadingHTTPServer):
     allow_reuse_address = True
 
-    def __init__(self, server_address: tuple[str, int], static_dir: Path, store: RequestStore):
+    def __init__(self, server_address: Tuple[str, int], static_dir: Path, store: RequestStore):
         super().__init__(server_address, RequestRecorderHandler)
         self.static_dir = static_dir
         self.store = store
