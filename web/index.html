@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LAN Request Monitor</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <div class="page-glow page-glow-left"></div>
+    <div class="page-glow page-glow-right"></div>
+    <main class="shell">
+      <header class="hero panel">
+        <div class="hero-copy">
+          <p class="eyebrow">LAN Request Monitor</p>
+          <h1>本地接收服务可视化面板</h1>
+          <p class="hero-text">
+            用浏览器实时查看你的脚本到底是从哪个来源 IP 发来的请求，并直接展开请求头和 body 细节。
+          </p>
+        </div>
+        <div class="hero-meta">
+          <div class="status-line">
+            <span class="status-dot" id="status-dot"></span>
+            <span id="status-text">准备连接</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">采集端点</span>
+            <code id="capture-endpoint">/demo</code>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">上次刷新</span>
+            <span id="last-refresh">尚未刷新</span>
+          </div>
+        </div>
+      </header>
+
+      <section class="stats-grid">
+        <article class="stat-card panel">
+          <span class="stat-label">总请求数</span>
+          <strong class="stat-value" id="stat-total">0</strong>
+        </article>
+        <article class="stat-card panel">
+          <span class="stat-label">来源 IP 数</span>
+          <strong class="stat-value" id="stat-ips">0</strong>
+        </article>
+        <article class="stat-card panel">
+          <span class="stat-label">最近请求</span>
+          <strong class="stat-value stat-small" id="stat-latest">暂无</strong>
+        </article>
+        <article class="stat-card panel">
+          <span class="stat-label">方法分布</span>
+          <strong class="stat-value stat-small" id="stat-methods">暂无</strong>
+        </article>
+      </section>
+
+      <section class="panel toolbar">
+        <label class="field">
+          <span>来源 IP</span>
+          <input id="filter-ip" type="text" placeholder="例如 192.168.1.101">
+        </label>
+        <label class="field">
+          <span>请求方法</span>
+          <select id="filter-method">
+            <option value="">全部</option>
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+            <option value="PUT">PUT</option>
+            <option value="DELETE">DELETE</option>
+          </select>
+        </label>
+        <label class="field field-wide">
+          <span>全文检索</span>
+          <input id="filter-text" type="text" placeholder="可搜路径、Header、Body">
+        </label>
+        <div class="toolbar-actions">
+          <button class="button button-secondary" id="refresh-btn">立即刷新</button>
+          <button class="button button-danger" id="clear-btn">清空日志</button>
+        </div>
+      </section>
+
+      <section class="content-grid">
+        <section class="panel list-panel">
+          <div class="section-head">
+            <div>
+              <p class="section-title">最近请求</p>
+              <p class="section-subtitle" id="list-subtitle">等待数据</p>
+            </div>
+          </div>
+          <div id="empty-state" class="empty-state">
+            还没有请求。先运行发送脚本，把目标 URL 指向当前服务，例如 `/demo`。
+          </div>
+          <div id="request-list" class="request-list"></div>
+        </section>
+
+        <aside class="panel detail-panel">
+          <div class="section-head">
+            <div>
+              <p class="section-title">请求详情</p>
+              <p class="section-subtitle">点击左侧任一请求查看完整明细</p>
+            </div>
+          </div>
+
+          <div id="detail-empty" class="detail-empty">
+            暂无选中请求
+          </div>
+
+          <div id="detail-card" class="detail-card hidden">
+            <div class="detail-topline">
+              <span class="method-chip" id="detail-method">GET</span>
+              <span class="detail-path" id="detail-path">/demo</span>
+            </div>
+            <dl class="detail-grid">
+              <div>
+                <dt>来源 IP</dt>
+                <dd id="detail-ip">-</dd>
+              </div>
+              <div>
+                <dt>来源端口</dt>
+                <dd id="detail-port">-</dd>
+              </div>
+              <div>
+                <dt>时间</dt>
+                <dd id="detail-time">-</dd>
+              </div>
+              <div>
+                <dt>Body 大小</dt>
+                <dd id="detail-size">-</dd>
+              </div>
+            </dl>
+
+            <div class="detail-block">
+              <div class="detail-block-title">Headers</div>
+              <pre id="detail-headers"></pre>
+            </div>
+            <div class="detail-block">
+              <div class="detail-block-title">Body</div>
+              <pre id="detail-body"></pre>
+            </div>
+            <div class="detail-block">
+              <div class="detail-block-title">Raw JSON</div>
+              <pre id="detail-json"></pre>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

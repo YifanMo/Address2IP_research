@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Proxy Hit Monitor</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <div class="page-glow page-glow-left"></div>
+    <div class="page-glow page-glow-right"></div>
+    <main class="shell">
+      <header class="hero panel">
+        <div class="hero-copy">
+          <p class="eyebrow">Proxy Hit Monitor</p>
+          <h1>代理命中实时面板</h1>
+          <p class="hero-text">
+            实时查看是哪个局域网 IP 通过代理访问了哪个目标地址。HTTP 可见完整 URL，HTTPS 在不解密的前提下只显示目标主机。
+          </p>
+        </div>
+        <div class="hero-meta">
+          <div class="status-line">
+            <span class="status-dot" id="status-dot"></span>
+            <span id="status-text">准备连接</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">代理端点</span>
+            <code id="proxy-endpoint">加载中</code>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Dashboard API</span>
+            <code id="dashboard-api">/api/hits</code>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">上次刷新</span>
+            <span id="last-refresh">尚未刷新</span>
+          </div>
+        </div>
+      </header>
+
+      <section class="stats-grid">
+        <article class="stat-card panel">
+          <span class="stat-label">命中总数</span>
+          <strong class="stat-value" id="stat-total">0</strong>
+        </article>
+        <article class="stat-card panel">
+          <span class="stat-label">设备 IP 数</span>
+          <strong class="stat-value" id="stat-ips">0</strong>
+        </article>
+        <article class="stat-card panel">
+          <span class="stat-label">目标主机数</span>
+          <strong class="stat-value" id="stat-hosts">0</strong>
+        </article>
+        <article class="stat-card panel">
+          <span class="stat-label">最近命中</span>
+          <strong class="stat-value stat-small" id="stat-latest">暂无</strong>
+        </article>
+      </section>
+
+      <section class="panel toolbar toolbar-proxy">
+        <label class="field">
+          <span>设备 IP</span>
+          <input id="filter-ip" type="text" placeholder="例如 192.168.3.23">
+        </label>
+        <label class="field">
+          <span>目标主机</span>
+          <input id="filter-host" type="text" placeholder="例如 example.com">
+        </label>
+        <label class="field">
+          <span>模式</span>
+          <select id="filter-mode">
+            <option value="">全部</option>
+            <option value="http-proxy">HTTP Proxy</option>
+            <option value="https-connect">HTTPS CONNECT</option>
+          </select>
+        </label>
+        <label class="field field-wide">
+          <span>全文检索</span>
+          <input id="filter-text" type="text" placeholder="可搜 URL、主机、方法、备注">
+        </label>
+        <div class="toolbar-actions">
+          <button class="button button-secondary" id="refresh-btn">立即刷新</button>
+          <button class="button button-danger" id="clear-btn">清空日志</button>
+        </div>
+      </section>
+
+      <section class="content-grid">
+        <section class="panel list-panel">
+          <div class="section-head">
+            <div>
+              <p class="section-title">最近命中</p>
+              <p class="section-subtitle" id="list-subtitle">等待数据</p>
+            </div>
+          </div>
+          <div id="empty-state" class="empty-state">
+            还没有命中记录。先让一台设备通过这个代理发出请求，再回来刷新这里。
+          </div>
+          <div id="hit-list" class="request-list"></div>
+        </section>
+
+        <aside class="panel detail-panel">
+          <div class="section-head">
+            <div>
+              <p class="section-title">命中详情</p>
+              <p class="section-subtitle">点击左侧任一记录查看完整明细</p>
+            </div>
+          </div>
+
+          <div id="detail-empty" class="detail-empty">
+            暂无选中记录
+          </div>
+
+          <div id="detail-card" class="detail-card hidden">
+            <div class="detail-topline">
+              <span class="method-chip" id="detail-mode">HTTP</span>
+              <span class="detail-path" id="detail-target">-</span>
+            </div>
+            <dl class="detail-grid">
+              <div>
+                <dt>设备 IP</dt>
+                <dd id="detail-ip">-</dd>
+              </div>
+              <div>
+                <dt>设备端口</dt>
+                <dd id="detail-port">-</dd>
+              </div>
+              <div>
+                <dt>方法</dt>
+                <dd id="detail-method">-</dd>
+              </div>
+              <div>
+                <dt>状态</dt>
+                <dd id="detail-status">-</dd>
+              </div>
+              <div>
+                <dt>目标主机</dt>
+                <dd id="detail-host">-</dd>
+              </div>
+              <div>
+                <dt>耗时</dt>
+                <dd id="detail-duration">-</dd>
+              </div>
+              <div>
+                <dt>请求字节</dt>
+                <dd id="detail-request-bytes">-</dd>
+              </div>
+              <div>
+                <dt>响应字节</dt>
+                <dd id="detail-response-bytes">-</dd>
+              </div>
+            </dl>
+
+            <div class="detail-block">
+              <div class="detail-block-title">说明</div>
+              <pre id="detail-note"></pre>
+            </div>
+            <div class="detail-block">
+              <div class="detail-block-title">Raw JSON</div>
+              <pre id="detail-json"></pre>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script src="/proxy-monitor.js"></script>
+  </body>
+</html>
